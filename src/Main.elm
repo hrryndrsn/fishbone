@@ -10,7 +10,6 @@ import Json.Encode as E
 import Svg exposing (circle, rect, svg, text)
 import Svg.Attributes exposing (cx, cy, fill, height, r, rx, ry, viewBox, width, x, y)
 import Svg.Events exposing (onClick)
-import Time exposing (..)
 
 
 
@@ -52,7 +51,6 @@ type alias Model =
     { counter : Int
     , window : WindowEvent
     , mouse : MousePos
-    , time : Time.Posix
     }
 
 
@@ -79,7 +77,6 @@ init =
             { x = 0
             , y = 0
             }
-      , time = Time.millisToPosix 0
       }
     , Cmd.none
     )
@@ -94,7 +91,6 @@ type Msg
     | Changed E.Value
     | MouseMoved E.Value
     | ClickedSvg
-    | Tick Time.Posix
     | NoOp
 
 
@@ -149,17 +145,6 @@ update msg model =
         ClickedSvg ->
             ( { model | counter = model.counter + 1 }
             , cache (E.int (model.counter + 1))
-            )
-
-        -- in
-        -- ( { model | window = "Error Parsing value in update" }, Cmd.none )
-        Tick newTime ->
-            ( { model
-                | time = newTime
-
-                -- , velocity = model.velocity * 2
-              }
-            , Cmd.none
             )
 
         NoOp ->
@@ -269,7 +254,6 @@ subscriptions model =
     Sub.batch
         [ window Changed
         , mouse MouseMoved
-        , Time.every 1000 Tick
         ]
 
 

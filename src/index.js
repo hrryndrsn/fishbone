@@ -36,7 +36,6 @@ window.addEventListener('mousemove', (event) => {
     x: event.x,
     y: event.y
   }
-  console.log(mousePos)
   app.ports.mouse.send(mousePos);
 });
 
