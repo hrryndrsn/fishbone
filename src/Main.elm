@@ -1,5 +1,7 @@
 port module Main exposing (Model, Msg(..), cache, init, main, update, view, window)
 
+-- import Browser.Events exposing (onMouseMove)
+
 import Browser
 import Html exposing (Html, button, div, h1, img, p, text)
 import Html.Attributes exposing (src)
@@ -51,7 +53,12 @@ type alias Model =
     { counter : Int
     , window : WindowEvent
     , mouse : MousePos
+    , dots : List Dot
     }
+
+
+
+-- TYPES
 
 
 type alias WindowEvent =
@@ -66,6 +73,16 @@ type alias MousePos =
     }
 
 
+type alias Dot =
+    { x : Int
+    , y : Int
+    }
+
+
+
+-- INIT
+
+
 init : ( Model, Cmd Msg )
 init =
     ( { counter = 0
@@ -77,6 +94,7 @@ init =
             { x = 0
             , y = 0
             }
+      , dots = []
       }
     , Cmd.none
     )
@@ -91,6 +109,7 @@ type Msg
     | Changed E.Value
     | MouseMoved E.Value
     | ClickedSvg
+    | AddDot Int Int
     | NoOp
 
 
@@ -147,6 +166,13 @@ update msg model =
             , cache (E.int (model.counter + 1))
             )
 
+        AddDot x y ->
+            ( { model
+                | dots = Dot x y :: model.dots
+              }
+            , Cmd.none
+            )
+
         NoOp ->
             ( model, Cmd.none )
 
@@ -175,52 +201,42 @@ view : Model -> Html Msg
 view model =
     div []
         [ div []
-            [ renderPlainPage
-                model.window.width
-                model.window.height
-                model.mouse.x
-                model.mouse.y
-
-            --   renderSvg
-            --     ( model.window.width
-            --     , model.window.height
-            --     )
+            [ renderSvg
+                model
             ]
         ]
 
 
-renderPlainPage : Int -> Int -> Int -> Int -> Html.Html Msg
-renderPlainPage width height x y =
-    div []
-        [ img [ src "/logo.svg" ] []
-        , h1 []
-            [ text
-                "Your Elm App is working, Zord!"
-            ]
-        , p []
-            [ text "w: "
-            , text (String.fromInt width)
-            , text " h: "
-            , text (String.fromInt height)
-            ]
-        , p []
-            [ text "x: "
-            , text (String.fromInt x)
-            , text " y: "
-            , text (String.fromInt y)
-            ]
-        , button [ onClick SendCache ] [ text "cache" ]
-        ]
+
+--Vew helpers
 
 
-renderSvg : ( Int, Int ) -> Html.Html Msg
-renderSvg ( w, h ) =
+renderSvg : Model -> Html Msg
+renderSvg model =
     let
         stringWidth =
-            String.fromInt w
+            String.fromInt model.window.width
 
         stringHeight =
-            String.fromInt h
+            String.fromInt model.window.height
+
+        sX =
+            model.mouse.x
+                |> String.fromInt
+
+        sY =
+            model.mouse.y
+                |> String.fromInt
+
+        sXI =
+            model.window.width
+                - model.mouse.x
+                |> String.fromInt
+
+        sYI =
+            model.window.height
+                - model.mouse.y
+                |> String.fromInt
     in
     svg
         [ width stringWidth
@@ -233,16 +249,25 @@ renderSvg ( w, h ) =
                 ++ stringHeight
             )
         , fill "white"
+        , onClick (AddDot model.mouse.x model.mouse.y)
         ]
-        [ Svg.text_
-            [ fill "black"
-            , x "20"
-            , y "35"
-            ]
-            [ Svg.text
-                (stringWidth ++ " " ++ stringHeight)
-            ]
+        [ Svg.circle [ cx sX, cy sY, r "50", fill "red" ] []
+        , Svg.circle [ cx sXI, cy sY, r "50", fill "black" ] []
+        , Svg.circle [ cx sX, cy sYI, r "50", fill "black" ] []
+        , Svg.circle [ cx sXI, cy sYI, r "50", fill "black" ] []
         ]
+
+
+renderDot : Dot -> Svg.Svg msg
+renderDot dot =
+    let
+        sX =
+            String.fromInt dot.x
+
+        sY =
+            String.fromInt dot.y
+    in
+    Svg.circle [ cx sX, cy sY, r "50", fill "black" ] []
 
 
 
@@ -259,8 +284,6 @@ subscriptions model =
 
 
 -- DECODERS
---deoces a value to a stirng
---returns a result which is a decode error or a string
 
 
 parseWindowResize : E.Value -> Result.Result Decode.Error WindowEvent
