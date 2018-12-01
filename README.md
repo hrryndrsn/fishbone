@@ -1,3 +1,3 @@
-## Elm + SVG creative coding template
+## ELm fishbone fun
 
-Ported create-elm-app template
+Ported app adapted from the create-elm-app template
